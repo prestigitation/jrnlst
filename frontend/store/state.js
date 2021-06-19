@@ -1,3 +1,6 @@
 module.exports = () => ({
-    user: undefined
+    user: undefined,
+    currentItem: undefined,
+    article: undefined
+
 })

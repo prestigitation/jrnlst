@@ -6,4 +6,14 @@ export const auth = (state, { _id, email, login }) => {
         state.user.login = login
     }
 }
-export const logout = state => state.user = undefined
+export const setCurrentItem = (state, item) => {
+    state.currentItem = item
+}
+
+export const clearCurrentItem = (state) => {
+    state.currentItem = undefined
+}
+
+export const addItem = (state, item) => {
+
+}
