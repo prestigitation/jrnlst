@@ -1,3 +1,5 @@
+import { _ } from "core-js"
+
 export const auth = (state, { _id, email, login }) => {
     if (_id && email && login) {
         state.user = {}
@@ -14,6 +16,18 @@ export const clearCurrentItem = (state) => {
     state.currentItem = undefined
 }
 
-export const addItem = (state, item) => {
+export const clearArticle = (state) => {
+    state.article = undefined
+}
 
+export const addItem = (state, item) => {
+    let article
+    if (state.article) {
+        article = state.article
+        article.push(item)
+    } else {
+
+        article = [{...item }]
+    }
+    state.article = article
 }

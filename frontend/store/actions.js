@@ -1,3 +1,5 @@
+import _merge from 'lodash'
+
 export const authentificate = (ctx, user) => {
     ctx.commit('auth', user)
 }
@@ -13,4 +15,8 @@ export const changeCurrentItem = (ctx, item) => {
 }
 export const newArticleItem = (ctx, item) => {
     ctx.commit('addItem', item)
+}
+
+export const clearArticle = (ctx) => {
+    ctx.commit('clearArticle')
 }

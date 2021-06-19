@@ -12,6 +12,7 @@
     </client-only>
     <div id="desktop_canvas" class="mt-3" @dragover.prevent @dragenter.prevent @drop="onDrop($event)" :style="jsonToCss(desktop_canvas_style)">
     </div>
+    <b-button @click.prevent="$store.dispatch('clearArticle')"> Очистить информацию о статье</b-button>
   </div>
 </template>
 
@@ -34,28 +35,14 @@ export default {
         'margin-left' : 'auto',
         'margin-right' : 'auto',
         'border' : '2px dotted black'
-      }
+      },
+      canvas_desktop_objects_count : 0,
+      canvas_mobile_objects_count : 0,
+      canvas_laptop_objects_count : 0,
     }
-  },
-  mounted() {
-    const obj1 = {
-      desktop_canvas : {
-        width: "200",
-        height: "200"
-      }
-};
-const obj2 = {
-  desktop_canvas : {
-    test : '300'
-  }
-};
-    console.log(_.merge(obj1,obj2))
   },
   methods : {
     onDragStart(e, item) {
-      /*e.dataTransfer.dropEffect = 'move'
-      e.dataTransfer.effectAllowed = 'move'
-      e.dataTransfer.setData('itemId', item.id.toString())*/
       this.$store.dispatch('changeCurrentItem',item) // помещаем в хранилище текущий редактируемый объект
       // добавить проверку десктоп или мобил
     },
@@ -65,19 +52,23 @@ const obj2 = {
         case 'desktop_canvas' : { // если объект был помещен на декстопный канвас
           let desktopCanvas = document.getElementById('desktop_canvas')
           let newElement = document.createElement('div')
-          let currentItem = this.getCurrentItem
+          let positionProperties = {}
           for(let [prop,value] of Object.entries(this.getCurrentItem)) {
              if(prop == 'style') { // изменяем позиционирование элемента на абсолютное, для вольного размещения по канве
                value += `position:absolute;top:${e.clientY}px;left:${e.clientX}px;` // размещаем элемент на той позиции, куда установлен курсор на момент дропа
-               console.log(value)
              }
              newElement.setAttribute(prop,value)
+             positionProperties[prop] = value // информация о координатах объекта
           }
+          let desktopProperties = {...this.getCurrentItem, canvas_inner_id : this.canvas_desktop_objects_count, canvas_type : 'desktop_canvas' }
+          let currentItem = { ..._.merge(desktopProperties,positionProperties) }
+          console.log(currentItem)
+          this.canvas_desktop_objects_count++
           this.$store.dispatch('clearCurrentItem')
-         // this.$store.dispatch('newArticleItem',item,'canvas')
+          this.$store.dispatch('newArticleItem',currentItem)
           desktopCanvas.appendChild(newElement)
+
           // также открыть редактор элемента
-          //this.$store.dispatch('newArticleItem',item);
         }
       }
     },
@@ -86,7 +77,6 @@ const obj2 = {
       for(let [key,value] of Object.entries(obj)) {
         result += key + ':' + value + ';'
       }
-      console.log(typeof result)
       return result
     }
   },
