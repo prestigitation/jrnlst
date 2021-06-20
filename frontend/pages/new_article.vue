@@ -24,7 +24,24 @@ export default {
     return {
       title : '',
       objects : [
-        {id : 0, type : 'square', style : 'border : 1px solid black; width : 50px; height : 50px;',complex : false},
+        {id : 0, type : 'square', style : 'border : 1px solid black; width : 50px; height : 50px;',complex : false,annotation : 'Четырехугольник', properties : [
+          {property : 'border', params : [
+            {annotation : 'Толщина', default : '1px', value : '1px'},
+            {annotation : 'Тип рамки', default : 'solid', value : 'solid', variants : []},
+            {annotation : 'Цвет рамки(rgb или словесная анотация)', default : 'black', value : 'black'}
+          ]},
+          {
+            property : 'height', params : [
+              { default : '50px', value : '50px'}
+            ]
+          },
+          {
+            property : 'width', params : [
+              { default : '50px', value : '50px'}
+            ]
+          }
+      ]
+        },
         {id : 1, type : 'circle', style : 'border-radius : 25px;border : 1px solid black; padding : 25px;',complex : false},
         {id : 2, type: 'text', content : 'Text' ,style : 'font-weight: bold;text-decoration:underline;', img : { src : './text_cursor.png'},complex : false},
       ],
@@ -53,20 +70,22 @@ export default {
           let desktopCanvas = document.getElementById('desktop_canvas')
           let newElement = document.createElement('div')
           let positionProperties = {}
-          for(let [prop,value] of Object.entries(this.getCurrentItem)) {
+          let currentItemProperties = Object.entries(this.getCurrentItem)
+          let canvasProperties = Object.entries({canvas_type : 'desktop_canvas',canvas_inner_id : this.canvas_desktop_objects_count})
+          for(let [prop,value] of _.merge(currentItemProperties,canvasProperties)) {
              if(prop == 'style') { // изменяем позиционирование элемента на абсолютное, для вольного размещения по канве
                value += `position:absolute;top:${e.clientY}px;left:${e.clientX}px;` // размещаем элемент на той позиции, куда установлен курсор на момент дропа
              }
              newElement.setAttribute(prop,value)
              positionProperties[prop] = value // информация о координатах объекта
           }
-          let desktopProperties = {...this.getCurrentItem, canvas_inner_id : this.canvas_desktop_objects_count, canvas_type : 'desktop_canvas' }
-          let currentItem = { ..._.merge(desktopProperties,positionProperties) }
+          let currentItem = { ..._.merge(this.getCurrentItem,positionProperties) }
           console.log(currentItem)
           this.canvas_desktop_objects_count++
           this.$store.dispatch('clearCurrentItem')
           this.$store.dispatch('newArticleItem',currentItem)
           desktopCanvas.appendChild(newElement)
+          //desktopCanvas.addEventListener('click', (e) => {console.log(e)})
 
           // также открыть редактор элемента
         }
