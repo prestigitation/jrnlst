@@ -31,3 +31,7 @@ export const addItem = (state, item) => {
     }
     state.article = article
 }
+
+export const getEditedElement = (state, canvas_inner_id, canvas_type) => {
+    state.currentItem = state.article.filter(elem => elem.canvas_inner_id == canvas_inner_id)
+}

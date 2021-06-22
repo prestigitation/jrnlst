@@ -20,3 +20,7 @@ export const newArticleItem = (ctx, item) => {
 export const clearArticle = (ctx) => {
     ctx.commit('clearArticle')
 }
+
+export const getEditedElement = (ctx, canvas_inner_id, canvas_type) => {
+    ctx.commit('getEditedElement', canvas_inner_id, canvas_type)
+}
