@@ -63,21 +63,22 @@ export default {
                                     { value: 'double', text: 'double' },
                                     { value: 'groove', text: 'groove' }
                                 ],
-                                input_type: 'select'
+                                input_type: 'select',
                           },
                           { annotation: 'Цвет рамки(rgb или словесная анотация)', default: 'black', value: 'black', input_type: 'text' }
                         ]},
                         {
                             property: 'height',
                             params: [
-                                { default: '50px', value: '50px' }
-                            ]
+                                {annotation : 'Высота', default: '50px', value: '50px',input_type : 'text'}
+                            ],
+
                         },
                         {
                             property: 'width',
                             params: [
-                                { default: '50px', value: '50px' }
-                            ]
+                                {annotation : 'Ширина', default: '50px', value: '50px',input_type : 'text'}
+                            ],
                         }
                 ]
             },
@@ -100,26 +101,73 @@ export default {
   },
   methods : {
     deleteItem() {},
+    isStyleCompatible() {}, // соответствие регулярке, определенное в свойстве объекта
     editItem() {
       let currentItem = this.getCurrentItem[0]
       let {canvas_type,canvas_inner_id,properties} = currentItem
       let editedElements = document.getElementsByClassName('editor_' +  canvas_type + '_' + canvas_inner_id)
-      console.log(editedElements)
-      let editedItem = []
-      properties.map(property =>{
+      // Элементы редактора имеют класс, подобный шаблону в строке выше. Находим все элементы для поcледующего итерирования
+      let editedProperties = [] // Массив значений, затронутых редактором
+      let counter = 0;
+      properties.forEach(property =>{
           for(let index in property.params) {
-              property.params[index].value = editedElements[index]._value ? editedElements[index]._value : editedElements[index].value
+            // для select  полей _value , для текста - value
+            if(property.params[index].value) {
+              property.params[index].value = editedElements[counter].value
+            } else property.params[index].value = editedElements[counter]._value
+            counter++
         }
-        editedItem.push(property)
-
+        editedProperties.push(property)
       })
+      let mergedProperties = _.merge(_.merge(currentItem.properties,editedProperties),currentItem.properties)
+      // сливаем полученные свойства объекта с измененными
+      console.log(mergedProperties)
+      currentItem.properties = mergedProperties
+      let editedItem = currentItem
       console.log(editedItem)
+      this.$store.dispatch('replace', editedItem) // заменяем предыдущий элемент статьи на отредактированный
+      this.$store.dispatch('changeCurrentItem',editedItem) // устанавливаем отредактированный объект как текущий
+      this.replaceEditedItemStyle(editedItem) // изменяем стили отредактированному объекту
     },
-    isStyleCompatible() {},
-
+    replaceEditedItemStyle(item) {
+      let canvasElements = document.getElementById(item.canvas_type).getElementsByTagName('div')
+      let editedElement
+      for(let i=0;i<canvasElements.length;i++) {
+        if(canvasElements[i].getAttribute('canvas_inner_id') == item.canvas_inner_id) {
+          editedElement = canvasElements[i]
+        }
+      }
+      editedElement.style = this.parseObjectStyles()
+    },
+    parseObjectStyles() {
+      let properties = this.getCurrentItem.properties
+      let currentItemStyle = this.getCurrentItem.style
+      console.log(properties)
+      let result = ''
+      for(let index in properties) {
+        let params = properties[index].params
+          if(params.length > 1) {
+            result += `${properties[index].property}:`
+            for(let param in params) {
+              result+=`${params[param].value} `
+              if(param == params.length - 1) {  // если выбран последний элемент, добавляем ;
+                result+= ';'
+              }
+            }
+          } else
+          result += `${properties[index].property}:`
+          if(params[0]._value) {
+            result += ` ${params[0]._value}`
+          } else if(params[0].value) {
+            result += `${params[0].value} `
+          }
+          result +=';'
+      }
+      result += currentItemStyle.slice(currentItemStyle.indexOf('position')) // приплетаем стили из текущего объекта хранилища
+      return result
+    },
     onDragStart(e, item) {
       this.$store.dispatch('changeCurrentItem',item) // помещаем в хранилище текущий редактируемый объект
-      // добавить проверку десктоп или мобил
     },
     onDrop(e) {
       switch(e.target.id) { // на какую конву был помещен объект
@@ -147,6 +195,7 @@ export default {
           newElement.addEventListener('click',e => {
             e.preventDefault()
             this.$store.dispatch('getEditedElement',e.target.getAttribute('canvas_inner_id'),'desktop_canvas')
+            //this.$store.dispatch('changeCurrentItem', this.getCurrentItem)
             // при клике на элемент он помечается как текущий редактируенмый объект
           })
         }

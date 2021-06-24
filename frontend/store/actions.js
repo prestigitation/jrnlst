@@ -24,3 +24,7 @@ export const clearArticle = (ctx) => {
 export const getEditedElement = (ctx, canvas_inner_id, canvas_type) => {
     ctx.commit('getEditedElement', canvas_inner_id, canvas_type)
 }
+
+export const replace = (ctx, item) => {
+    ctx.commit('replaceArticleElement', item)
+}

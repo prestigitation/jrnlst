@@ -35,3 +35,14 @@ export const addItem = (state, item) => {
 export const getEditedElement = (state, canvas_inner_id, canvas_type) => {
     state.currentItem = state.article.filter(elem => elem.canvas_inner_id == canvas_inner_id)
 }
+
+export const replaceArticleElement = (state, item) => {
+    state.currentItem = item
+    let article = state.article
+    for (let i = 0; i < article.length; i++) {
+        if (article[i].canvas_inner_id == item.canvas_inner_id && article[i].canvas_type == item.canvas_type) {
+            article[i] = item
+        }
+    }
+    state.article = article
+}
