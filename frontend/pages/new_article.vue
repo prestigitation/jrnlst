@@ -7,10 +7,13 @@
           <div v-for="property in item.properties" :key="property">
             <u class="lead">{{property.annotation}}</u>
               <div v-for="param in property.params" :key="param">
-                  <b-form-input v-if="param.input_type=='text'" :class="'editor_' + getCurrentItem[0].canvas_type + '_'+ getCurrentItem[0].canvas_inner_id" type="text" :placeholder='param.annotation' class="my-2">{{param.default}}</b-form-input>
-                  <b-form-select v-model="editor_select" :class="'editor_' + getCurrentItem[0].canvas_type + '_'+ getCurrentItem[0].canvas_inner_id"  v-else-if="param.input_type=='select'" :options="param.variants" class="my-2">{{param.annotation}}</b-form-select>
+                  <b-form-input v-if="param.input_type=='text'" :class="'editor_' + item.canvas_type + '_'+ item.canvas_inner_id" type="text" :placeholder='param.annotation' class="my-2">{{param.default}}</b-form-input>
+                  <b-form-select v-model="editor_select" :class="'editor_' + item.canvas_type + '_'+ item.canvas_inner_id"  v-else-if="param.input_type=='select'" :options="param.variants" class="my-2">{{param.annotation}}</b-form-select>
               </div>
            </div>
+        </div>
+        <div>
+          <b-form-input type="text" v-model="editorInnerHTML" placeholder='Текст' />
         </div>
         <div class="d-flex">
           <b-button variant='success' class='my-2 mx-1 mx-auto w-auto justify-content-center' @click.prevent='editItem'>Применить стили</b-button>
@@ -40,12 +43,16 @@ export default {
     return{
         title: '',
         editorForm: '',
-        objects: [{
+        editorInnerHTML: '',
+        objects: [
+
+              {
                 id: 0,
                 type: 'square',
                 style: 'border : 1px solid black; width : 50px; height : 50px;',
                 complex: false,
                 annotation: 'Четырехугольник',
+                innerHTML : '',
                 properties: [{
                         property: 'border',
                         annotation: 'Четырехугольник',
@@ -82,7 +89,9 @@ export default {
                         }
                 ]
             },
-            { id: 1, type: 'circle', style: 'border-radius : 25px;border : 1px solid black; padding : 25px;', annotation : 'Окружность', complex: false, properties: [
+
+
+            { id: 1, type: 'circle', style: 'border-radius : 25px;border : 1px solid black; padding : 25px;', annotation : 'Окружность', innerHTML : '', complex: false, properties: [
                         {
                         property: 'border',
                         annotation: 'Круг',
@@ -118,6 +127,9 @@ export default {
                         },
             ]
             },
+
+
+
             { id: 2, type: 'text', content: 'Text', style: 'font-weight: bold;text-decoration:underline;', img: { src: './text_cursor.png' }, complex: false },
         ],
         currentObject: undefined,
@@ -141,6 +153,7 @@ export default {
       let currentItem = this.getCurrentItem[0]
       let {canvas_type,canvas_inner_id,properties} = currentItem
       let editedElements = document.getElementsByClassName('editor_' +  canvas_type + '_' + canvas_inner_id)
+      let editedInnerHTML = this.editorInnerHTML
       // Элементы редактора имеют класс, подобный шаблону в строке выше. Находим все элементы для поcледующего итерирования
       let editedProperties = [] // Массив значений, затронутых редактором
       let counter = 0;
@@ -154,9 +167,8 @@ export default {
       })
       let mergedProperties = _.merge(_.merge(currentItem.properties,editedProperties),currentItem.properties)
       // сливаем полученные свойства объекта с измененными
-      console.log(mergedProperties)
       currentItem.properties = mergedProperties
-      let editedItem = currentItem
+      let editedItem = _.merge(currentItem, {innerHTML : this.editorInnerHTML})
       console.log(editedItem)
       this.$store.dispatch('replace', editedItem) // заменяем предыдущий элемент статьи на отредактированный
       this.$store.dispatch('changeCurrentItem',editedItem) // устанавливаем отредактированный объект как текущий
@@ -171,6 +183,7 @@ export default {
         }
       }
       editedElement.style = this.parseObjectStyles()
+      editedElement.innerHTML = this.getCurrentItem.innerHTML
     },
     parseObjectStyles() {
       let properties = this.getCurrentItem.properties
