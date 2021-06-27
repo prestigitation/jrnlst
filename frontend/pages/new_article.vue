@@ -82,7 +82,42 @@ export default {
                         }
                 ]
             },
-            { id: 1, type: 'circle', style: 'border-radius : 25px;border : 1px solid black; padding : 25px;', complex: false },
+            { id: 1, type: 'circle', style: 'border-radius : 25px;border : 1px solid black; padding : 25px;', annotation : 'Окружность', complex: false, properties: [
+                        {
+                        property: 'border',
+                        annotation: 'Круг',
+                        params: [
+                          { annotation: 'Толщина', default: '1px', value: '1px', input_type: 'text' },
+                          {
+                                annotation: 'Тип рамки',
+                                default: 'solid',
+                                value: 'solid',
+                                variants: [
+                                    { value: null, text: 'Тип границы', disabled: true },
+                                    { value: 'dotted', text: 'dotted' },
+                                    { value: 'dashed', text: 'dashed' },
+                                    { value: 'solid', text: 'solid' },
+                                    { value: 'double', text: 'double' },
+                                    { value: 'groove', text: 'groove' }
+                                ],
+                                input_type: 'select',
+                          },
+                          { annotation: 'Цвет рамки(rgb или словесная анотация)', default: 'black', value: 'black', input_type: 'text' }
+                        ]},
+                        {
+                            property: 'padding',
+                            params: [
+                                {annotation : 'Внтуренний отступ', default: '25px', value: '25px',input_type : 'text'}
+                            ],
+                        },
+                        {
+                            property: 'border-radius',
+                            params: [
+                                {annotation : 'Радиус круга', default: '25px', value: '25px',input_type : 'text'}
+                            ],
+                        },
+            ]
+            },
             { id: 2, type: 'text', content: 'Text', style: 'font-weight: bold;text-decoration:underline;', img: { src: './text_cursor.png' }, complex: false },
         ],
         currentObject: undefined,
@@ -112,9 +147,7 @@ export default {
       properties.forEach(property =>{
           for(let index in property.params) {
             // для select  полей _value , для текста - value
-            if(property.params[index].value) {
-              property.params[index].value = editedElements[counter].value
-            } else property.params[index].value = editedElements[counter]._value
+            property.params[index].value = editedElements[counter].value ? editedElements[counter].value : editedElements[counter]._value
             counter++
         }
         editedProperties.push(property)
@@ -155,7 +188,8 @@ export default {
               }
             }
           } else
-          result += `${properties[index].property}:`
+          if(properties[index].property)
+            result += `${properties[index].property}:`
           if(params[0]._value) {
             result += ` ${params[0]._value}`
           } else if(params[0].value) {
@@ -164,18 +198,17 @@ export default {
           result +=';'
       }
       result += currentItemStyle.slice(currentItemStyle.indexOf('position')) // приплетаем стили из текущего объекта хранилища
+      // путем поиска в строке подстроки, начинающейся с position, т.к нам необходима позиция и следующие за ней координаты объекта
       return result
     },
     onDragStart(e, item) {
       this.$store.dispatch('changeCurrentItem',item) // помещаем в хранилище текущий редактируемый объект
     },
     onDrop(e) {
-      switch(e.target.id) { // на какую конву был помещен объект
-        case 'desktop_canvas' : { // если объект был помещен на декстопный канвас
-          let desktopCanvas = document.getElementById('desktop_canvas')
+          let desktopCanvas = document.getElementById(e.target.id)
           let newElement = document.createElement('div')
           let currentItemProperties = this.getCurrentItem
-          let positionProperties = {canvas_type : 'desktop_canvas',canvas_inner_id : this.canvas_desktop_objects_count} // REFACTOR
+          let positionProperties = {canvas_type : 'desktop_canvas',canvas_inner_id : e.target.id == 'desktop_canvas' ? this.canvas_desktop_objects_count : this.canvas_mobile_objects_count   } // REFACTOR
           for(let [prop,value] of Object.entries(_.merge(currentItemProperties,positionProperties))) {
              if(prop == 'style') {
                // изменяем позиционирование элемента на абсолютное, для вольного размещения по канве
@@ -185,21 +218,21 @@ export default {
              newElement.setAttribute(prop,value)
              positionProperties[prop] = value // информация о координатах объекта
           }
-          let desktopProperties = {...this.getCurrentItem, canvas_inner_id : this.canvas_desktop_objects_count, canvas_type : 'desktop_canvas' }
+          let desktopProperties = {...this.getCurrentItem, canvas_inner_id : e.target.id == 'desktop_canvas' ? this.canvas_desktop_objects_count : this.canvas_mobile_objects_count, canvas_type : e.target.id }
           let currentItem = { ..._.merge(desktopProperties,positionProperties) } // REFACTOR
-          console.log(currentItem)
-          this.canvas_desktop_objects_count++
+          if(e.target.id =='desktop_canvas') {
+            this.canvas_desktop_objects_count++
+          } else if (e.target.id == 'mobile_canvas') {
+            this.canvas_mobile_objects_count++
+          }
           this.$store.dispatch('clearCurrentItem')
           this.$store.dispatch('newArticleItem',currentItem)
           desktopCanvas.appendChild(newElement)
           newElement.addEventListener('click',e => {
             e.preventDefault()
-            this.$store.dispatch('getEditedElement',e.target.getAttribute('canvas_inner_id'),'desktop_canvas')
-            //this.$store.dispatch('changeCurrentItem', this.getCurrentItem)
+            this.$store.dispatch('getEditedElement',e.target.getAttribute('canvas_inner_id'),e.target.id)
             // при клике на элемент он помечается как текущий редактируенмый объект
           })
-        }
-      }
     },
     jsonToCss(obj) { // парсинг значений в строку со стилями
       let result = ''
